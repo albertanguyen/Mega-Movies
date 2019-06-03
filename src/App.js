@@ -24,8 +24,8 @@ class App extends React.Component {
       searchText: '',
       hasSearched: false,
       modalIsOpen: false,
+      moviekey: null,
       popularity: 'popular'
-
     }
   }
 
@@ -85,12 +85,25 @@ class App extends React.Component {
     })
   }
 
-  // getTrailers = async () => {
-  //   const { pageNumber, selectedView, movies } = this.state
-  //   const API_KEY = '1ba877ea9b60eed18e4a44c2cf42fc99';
-  //   const response = await fetch(`https://api.themoviedb.org/3/movie/${movie}/${selectedView}?api_key=${API_KEY}&language=en-US&page=${pageNumber}`)
+  getTrailers = async (movieId) => {
+    const { pageNumber } = this.state
+    const API_KEY = '1ba877ea9b60eed18e4a44c2cf42fc99';
+    const response = await fetch(`https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&language=en-US&page=${pageNumber}`)
+    const jsonData = await response.json()
 
-  // }
+    let pickRandomTrailer = null
+    if (jsonData.results !== undefined) {
+      pickRandomTrailer = jsonData.results[Math.floor(Math.random() * jsonData.results.length)]
+    }
+
+    if (pickRandomTrailer !== undefined) {
+      this.setState({
+        pageNumber: pageNumber + 1,
+        modalIsOpen: true,
+        moviekey: pickRandomTrailer.key,
+      })
+    }
+  }
 
 
   getMoviePosterUrl(path) {
@@ -108,10 +121,7 @@ class App extends React.Component {
         right: 'auto',
         bottom: 'auto',
         marginRight: '-50%',
-        paddingTop: 0,
-        paddingBottom: 0,
-        paddingLeft:0,
-        paddingRight: 0,
+        padding: 0,
         backgroundColor: 'black',
         transform: 'translate(-50%, -50%)'
       }
@@ -123,6 +133,7 @@ class App extends React.Component {
       popularity,
       backdrop_path,
       vote_average,
+      id
     }) => {
       return (
         <>
@@ -138,7 +149,7 @@ class App extends React.Component {
               <ListGroup.Item style={{ fontSize: "20px", fontWeight: "bolder" }}>Rating:  {vote_average}</ListGroup.Item>
               <ListGroup.Item style={{ fontSize: "20px", fontWeight: "bolder" }}>Popularity:  {Math.round(popularity)}</ListGroup.Item>
 
-              <Button variant="warning" onClick = { () => this.openTrailer() }>Watch Trailer</Button>
+              <Button variant="warning" onClick = { () => this.getTrailers(id) }>Watch Trailer</Button>
             </ListGroup>
           </Card.Body>
         </Card>
@@ -149,7 +160,7 @@ class App extends React.Component {
         >
           <button className="trailerButton" onClick={() => this.closeTrailer()}>X</button>
           <YouTube
-            videoId='6dzikBZTUy8'
+            videoId={this.state.moviekey}
           />  
         </Modal>
         </>
@@ -187,7 +198,6 @@ class App extends React.Component {
   }
 
   render() {
-    console.log('this state', this.state)
     return (
       <div>
         {this.navbar()}
