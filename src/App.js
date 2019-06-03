@@ -1,8 +1,17 @@
 import React from 'react';
 import moment from 'moment'
-import { Button, Card, ListGroup, Nav, Navbar, Form, FormControl, NavDropdown } from 'react-bootstrap';
+import { 
+  Button, 
+  Card, 
+  ListGroup, 
+  Nav, 
+  Navbar, 
+  Form, 
+  FormControl, 
+  NavDropdown } from 'react-bootstrap';
+import Modal from 'react-modal';
+import YouTube from 'react-youtube';
 import './App.css';
-// import { async } from 'q';
 
 class App extends React.Component {
   constructor() {
@@ -14,6 +23,7 @@ class App extends React.Component {
       pageNumber: 1,
       searchText: '',
       hasSearched: false,
+      modalIsOpen: false,
       popularity: 'popular'
 
     }
@@ -23,17 +33,6 @@ class App extends React.Component {
     this.getData()
   }
 
-  getData = async () => {
-    const { pageNumber, selectedView, popularity } = this.state
-    const API_KEY = '1ba877ea9b60eed18e4a44c2cf42fc99';
-    const response = await fetch(`https://api.themoviedb.org/3/movie/${selectedView}?api_key=${API_KEY}&language=en-US&page=${pageNumber}`)
-    const jsonData = await response.json()
-    const newState =
-      this.setState({
-        pageNumber: pageNumber + 1,
-        movies: this.state.movies.concat(jsonData.results)
-      }, () => console.log('second state', this.state))
-  }
 
   sortMoviesAsc() {
     const movies = this.state.movies.sort((a, b) => {
@@ -47,6 +46,14 @@ class App extends React.Component {
       return a.popularity - b.popularity
     })
     this.setState({ movies })
+  }
+
+  openTrailer() {
+    this.setState({ modalIsOpen: true })
+  }
+
+  closeTrailer() {
+    this.setState({ modalIsOpen: false })
   }
 
   getMovies = userChoice => {
@@ -66,11 +73,49 @@ class App extends React.Component {
     })
   }
 
+  getData = async () => {
+    const { pageNumber, selectedView } = this.state
+    const API_KEY = '1ba877ea9b60eed18e4a44c2cf42fc99';
+    const response = await fetch(`https://api.themoviedb.org/3/movie/${selectedView}?api_key=${API_KEY}&language=en-US&page=${pageNumber}`)
+    const jsonData = await response.json()
+
+    this.setState({
+      pageNumber: pageNumber + 1,
+      movies: this.state.movies.concat(jsonData.results)
+    })
+  }
+
+  // getTrailers = async () => {
+  //   const { pageNumber, selectedView, movies } = this.state
+  //   const API_KEY = '1ba877ea9b60eed18e4a44c2cf42fc99';
+  //   const response = await fetch(`https://api.themoviedb.org/3/movie/${movie}/${selectedView}?api_key=${API_KEY}&language=en-US&page=${pageNumber}`)
+
+  // }
+
+
   getMoviePosterUrl(path) {
     return `https://image.tmdb.org/t/p/w500${path}`
   }
 
   renderMovies() {
+    const modalStyles = {
+      overlay: {
+        backgroundColor: 'black'
+      },
+      content: {
+        top: '50%',
+        left: '50%',
+        right: 'auto',
+        bottom: 'auto',
+        marginRight: '-50%',
+        paddingTop: 0,
+        paddingBottom: 0,
+        paddingLeft:0,
+        paddingRight: 0,
+        backgroundColor: 'black',
+        transform: 'translate(-50%, -50%)'
+      }
+    };
     return this.state.movies.map(({
       title,
       release_date,
@@ -80,7 +125,8 @@ class App extends React.Component {
       vote_average,
     }) => {
       return (
-        <Card style={{ width: '25rem', display: "grid", padding: "0.30em 0.30em", margin: "0.5em" }}>
+        <>
+          <Card style={{ width: '25rem', display: "grid", padding: "0.30em 0.30em", margin: "0.5em" }}>
           <Card.Title style={{ fontSize: "2em", fontWeight: "bolder", minHeight: "3em" }}>{title}</Card.Title>
           <Card.Img variant="top" src={this.getMoviePosterUrl(backdrop_path)} />
           <Card.Body>
@@ -92,11 +138,22 @@ class App extends React.Component {
               <ListGroup.Item style={{ fontSize: "20px", fontWeight: "bolder" }}>Rating:  {vote_average}</ListGroup.Item>
               <ListGroup.Item style={{ fontSize: "20px", fontWeight: "bolder" }}>Popularity:  {Math.round(popularity)}</ListGroup.Item>
 
-              <Button variant="warning">Watch Trailer</Button>
+              <Button variant="warning" onClick = { () => this.openTrailer() }>Watch Trailer</Button>
             </ListGroup>
           </Card.Body>
         </Card>
-      )
+        <Modal
+          isOpen={ this.state.modalIsOpen }
+          style={ modalStyles }
+          contentLabel="Trailer Modal"
+        >
+          <button className="trailerButton" onClick={() => this.closeTrailer()}>X</button>
+          <YouTube
+            videoId='6dzikBZTUy8'
+          />  
+        </Modal>
+        </>
+        )
     })
   }
 
@@ -117,7 +174,6 @@ class App extends React.Component {
           <Form inline>
             <FormControl type="text" placeholder="Find Movies, TV Shows, Celebrities and More..." className="mr-sm-2" value={this.state.searchText} onChange={(e) => {
               this.setState({ searchText: e.target.value })
-              console.log(e.target.value)
             }} />
             <Button variant="warning" onClick={this.searchMovies}>Search</Button>
           </Form>
