@@ -1,5 +1,4 @@
 import React from 'react';
-import logo from './logo.svg';
 import moment from 'moment'
 import { Button, Card, ListGroup, Nav, Navbar, Form, FormControl, NavDropdown } from 'react-bootstrap';
 import './App.css';
